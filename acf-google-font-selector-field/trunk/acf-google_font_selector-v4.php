@@ -49,7 +49,7 @@ class acf_field_google_font_selector extends acf_field {
 		$this->defaults = array(
 			'include_web_safe_fonts' => true,
 			'enqueue_font'           => true,
-			'default_font'           => 'Droid Sans',
+			'default_font'           => 'Open Sans',
 		);
 
 		parent::__construct();
@@ -207,6 +207,15 @@ class acf_field_google_font_selector extends acf_field {
 
 			</div>
 
+        <?php /*
+			<div class="acfgfs-form-control acfgfs-font-websafe">
+				<div class="acfgfs-form-control-title"><?php _e('Websafe', 'acf-google-font-selector-field') ?></div>
+				<div class="acfgfs-list">
+					<?php acfgfs_display_websafe( $field ) ?>
+				</div>
+
+			</div> <?php */ ?>
+
 			<textarea name="acfgfs-font-data" class="acfgfs-font-data"><?php echo json_encode( $field ) ?></textarea>
 
 		</div>
@@ -258,8 +267,14 @@ class acf_field_google_font_selector extends acf_field {
 			$_POST[$field['key'] . '_subsets'] = acfgfs_get_font_subset_array( $new_value['font'] );
 		}
 
+        /*
+		if( empty( $_POST[$field['key'] . '_subsets'] ) ) {
+			$_POST[$field['key'] . '_websafe'] = acfgfs_get_font_websafe( $new_value['font'] );
+		} */
+
 		$new_value['variants'] = $_POST[$field['key'] . '_variants'];
 		$new_value['subsets'] = $_POST[$field['key'] . '_subsets'];
+		/*$new_value['websafe'] = $_POST[$field['key'] . '_websafe']; */
 		return $new_value;
 	}
 

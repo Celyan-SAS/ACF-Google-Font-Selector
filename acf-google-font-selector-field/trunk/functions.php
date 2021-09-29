@@ -12,7 +12,7 @@
  */
 
 
- /**
+/**
   * Get Fonts To Enqueue
   *
   * Retrieves the fonts to enqueue on the current page
@@ -22,28 +22,32 @@
   * @since 3.0.0
   *
   */
- function acfgfs_get_fonts_to_enqueue() {
-     if( is_singular() ) {
-         global $post;
-         $post_fields = get_field_objects( $post->ID );
-     }
-     $post_fields = ( empty( $post_fields ) ) ? array() : $post_fields;
-     $option_fields = get_field_objects( 'options' );
-     $option_fields = ( empty( $option_fields ) ) ? array() : $option_fields;
-     $fields = array_merge( $post_fields, $option_fields );
-     $font_fields = array();
-     foreach( $fields as $field ) {
-         if( !empty( $field['type'] ) && 'google_font_selector' == $field['type'] && !empty( $field['value'] ) ) {
-             $font_fields[] = $field['value'];
-         }
-     }
+function acfgfs_get_fonts_to_enqueue() {
+    if( is_singular() ) {
+        global $post;
+        $post_fields = get_field_objects( $post->ID );
+    }
+    $post_fields = ( empty( $post_fields ) ) ? array() : $post_fields;
+    $option_fields = get_field_objects( 'options' );
+    $option_fields = ( empty( $option_fields ) ) ? array() : $option_fields;
+    $fields = array_merge( $post_fields, $option_fields );
+    $font_fields = array();
+    foreach( $fields as $field ) {
+        if( !empty( $field['type'] ) && 'google_font_selector' == $field['type'] && !empty( $field['value'] ) ) {
+            $font_fields[] = $field['value'];
+        }
+    }
 
-     $font_fields = apply_filters( 'acfgfs/enqueued_fonts', $font_fields );
+    $font_fields = apply_filters( 'acfgfs/enqueued_fonts', $font_fields );
 
-     return $font_fields;
- }
+    if($_SERVER['REMOTE_ADDR'] == '109.220.119.249'){
+        //var_dump($font_fields);
+    }
 
- /**
+    return $font_fields;
+}
+
+/**
   * Enqueue Fonts
   *
   * Retrieves the fonts to enqueue on the current page
@@ -61,17 +65,25 @@ function acfgfs_google_font_enqueue(){
     $subsets = array();
     $font_element = array();
     foreach( $fonts as $font ) {
+
         $subsets = array_merge( $subsets, $font['subsets'] );
         $font_name = str_replace( ' ', '+', $font['font'] );
-        if( $font['variants'] == array( 'regular' ) ) {
-            $font_element[] = $font_name;
+
+        if($_SERVER['REMOTE_ADDR'] == '109.220.119.249'){
+            //var_dump($font);
         }
-        else {
-            $regular_variant = array_search( 'regular', $font['variants'] );
-            if( $regular_variant !== false ) {
-                $font['variants'][$regular_variant] = '400';
+
+        if(!empty($font['variants'])){
+            if( $font['variants'] == array( 'regular' ) ) {
+                $font_element[] = $font_name;
             }
-            $font_element[] = $font_name . ':' . implode( ',', $font['variants'] );
+            else {
+                $regular_variant = array_search( 'regular', $font['variants'] );
+                if( $regular_variant !== false ) {
+                    $font['variants'][$regular_variant] = '400';
+                }
+                $font_element[] = $font_name . ':' . implode( ',', $font['variants'] );
+            }
         }
     }
     $subsets = ( empty( $subsets ) ) ? array('latin') : array_unique( $subsets );
@@ -109,7 +121,7 @@ function acfgfs_get_font_dropdown_array( $field = null ) {
     if( !empty( $field['include_web_safe_fonts'] ) ) {
         $web_safe = acfgfs_get_web_safe_fonts();
         foreach( $web_safe as $font ) {
-            $font_array[$font] = $font;
+            $font_array[$font['family']] = $font['family'];
         }
     }
 
@@ -133,7 +145,20 @@ function acfgfs_get_font_dropdown_array( $field = null ) {
  *
  */
 function acfgfs_get_font( $font ) {
-    $fonts = acfgfs_get_fonts();
+
+    $fonts = acfgfs_get_fonts();	
+
+
+    //echo "<pre>", print_r("FONT SAVE 02 --- ", 1), "</pre>";
+    //echo "<pre>", print_r($font, 1), "</pre>";
+    ////echo "<pre>", print_r("fonts", 1), "</pre>";
+    ////echo "<pre>", print_r($fonts, 1), "</pre>";
+    //
+    //echo "<pre>", print_r("what?", 1), "</pre>";
+    //echo "<pre>", print_r($fonts[$font], 1), "</pre>";
+
+    //die();
+
     return $fonts[$font];
 }
 
@@ -164,27 +189,39 @@ function acfgfs_get_fonts() {
     }
 
     $acfgfs_fonts = array();
-    foreach( $fonts['items'] as $font ) {
-        $acfgfs_fonts[$font['family']] = array(
-            'variants' => $font['variants'],
-            'subsets' => $font['subsets']
-        );
-    }
 
     if( !empty( $field['include_web_safe_fonts'] ) ) {
         $web_safe = acfgfs_get_web_safe_fonts();
-        foreach( $web_safe as $font ) {
-            $acfgfs_fonts[$font] = array(
-                'variants' => array( 'regular', '700' ),
-                'subsets' => array( 'latin' )
+        $fonts = array_merge($fonts, $web_safe);
+    }
+    
+    if( isset( $fonts['items']  ) && is_array( $fonts['items']  ) ) {
+        foreach( $fonts['items'] as $font ) {
+            if( !isset($font['variants']) || !isset($font['subsets']) || !isset( $font['family'] ) ) { continue; }
+
+            $acfgfs_fonts[$font['family']] = array(
+                'variants' => $font['variants'],
+                'subsets' => $font['subsets']
             );
         }
     }
 
+    /*
+    if( !empty( $field['include_web_safe_fonts'] ) ) {
+        $web_safe = acfgfs_get_web_safe_fonts();
+        foreach( $web_safe as $font ) {
+            $acfgfs_fonts[$font['family']] = array(
+                'variants' => array( 'regular', '700' ),
+                'subsets' => array( 'latin' ),
+                'websafe' => $font['websafe'],
+            );
+        }
+    }
+    */
 
     return $acfgfs_fonts;
 }
-
+acfgfs_get_fonts();
 
 /**
  * Retrieve Google Fonts
@@ -226,7 +263,100 @@ function acfgfs_retrieve_fonts() {
  *
  */
 function acfgfs_get_web_safe_fonts() {
-    $web_safe = array( 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'Times New Roman', 'Times', 'Arial', 'Helvetica', 'Arial Black', 'Gadget', 'Impact', 'Charcoal', 'Lucida Sans Unicode', 'Lucida Grande', 'Tahoma', 'Geneva', 'Trebuchet MS', 'Helvetica', 'Verdana', 'Geneva', 'Courier New', 'Courier', 'Lucida Console', 'Monaco' );
+    $web_safe = array( 
+        array(
+            'family' => 'Georgia', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Palatino Linotype', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Book Antiqua', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Palatino', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Times New Roman', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Times', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Arial, sans-serif', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Helvetica,sans-serif', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Gadget', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Impact', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Charcoal', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Lucida Sans Unicode', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Lucida Grande', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Tahoma', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Geneva', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Trebuchet MS', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Helvetica', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Verdana', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Geneva', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Courier New', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Courier', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Lucida Console', 
+            'websafe' => 'true'
+        ),
+        array(
+            'family' => 'Monaco' ,
+            'websafe' => 'true'
+        ),
+    );
     return $web_safe;
 }
 
@@ -266,6 +396,24 @@ function acfgfs_get_font_subset_array( $font ) {
     return $font['subsets'];
 }
 
+
+/**
+ * Font Websafe Answer
+ *
+ * Gets websafe answer for a given font
+ *
+ * @param string $font The font to retrieve variants for
+ * @uses acfgfs_get_font()
+ * @return array The subset list for this font
+ * @author Daniel Pataki
+ * @since 3.0.0
+ *
+ */
+function acfgfs_get_font_websafe( $font ) {
+    $font = acfgfs_get_font( $font );
+    return $font['websafe'];
+}
+
 /**
  * Display Variant List
  *
@@ -294,20 +442,39 @@ function acfgfs_display_variant_list( $field, $new_font = null ) {
     $font['variants'] = (empty( $font['variants'] )) ? array() : $font['variants'];
     $i = 1;
     foreach( $font['variants'] as $variant ) :
-        if( empty( $new_font ) ) {
-            $checked = ( empty( $field['value'] ) || ( !empty( $field['value'] ) && in_array( $variant, $field['value']['variants'] ) ) ) ? 'checked="checked"' : '';
-        }
-        else {
-            $checked = ( $variant == 'regular' ) ? 'checked="checked"' : '';
-        }
+    if( empty( $new_font ) ) {
+        $checked = ( empty( $field['value'] ) || ( !empty( $field['value'] ) && in_array( $variant, $field['value']['variants'] ) ) ) ? 'checked="checked"' : '';
+    }
+    else {
+        $checked = ( $variant == 'regular' ) ? 'checked="checked"' : '';
+    }
 
-        ?>
+?>
 
-        <input <?php echo $checked ?> type="checkbox" id="<?php echo $field['key'] ?>_variants_<?php echo $i ?>" name="<?php echo $field['key'] ?>_variants[]" value="<?php echo $variant ?>"><label for="<?php echo $field['key'] ?>_variants_<?php echo $i ?>"><?php echo $variant ?></label> <br>
+<input <?php echo $checked ?> type="checkbox" id="<?php echo $field['key'] ?>_variants_<?php echo $i ?>" name="<?php echo $field['key'] ?>_variants[]" value="<?php echo $variant ?>"><label for="<?php echo $field['key'] ?>_variants_<?php echo $i ?>"><?php echo $variant ?></label> <br>
 
-        <?php $i++; endforeach;
+<?php $i++; endforeach;
 
 }
+
+/*
+function acfgfs_display_websafe( $field, $new_font = null ) {
+    $font = $new_font;
+    if( empty( $new_font ) ) {
+        $font = ( empty( $field['value']['font'] ) ) ? $field['default_font'] :     $field['value']['font'];
+    }
+
+    $font = acfgfs_get_font( $font );
+    $font['websafe'] = (empty( $font['websafe'] )) ? array() : $font['websafe'];
+
+?>
+
+<p>Websafe : <?php if($_SERVER['REMOTE_ADDR'] == '109.220.119.249'){ var_dump($font); } //echo $font['websafe']; ?></p>
+
+<?php
+
+}
+*/
 
 
 /**
@@ -339,16 +506,16 @@ function acfgfs_display_subset_list( $field, $new_font = null ) {
     $font['subsets'] = (empty( $font['subsets'] )) ? array() : $font['subsets'];
     $i = 1;
     foreach( $font['subsets'] as $subset ) :
-        if( empty( $new_font ) ) {
-            $checked = ( empty( $field['value'] ) || ( !empty( $field['value'] ) && in_array( $subset, $field['value']['subsets'] ) ) ) ? 'checked="checked"' : '';
-        }
-        else {
-            $checked = ( $subset == 'latin' ) ? 'checked="checked"' : '';
-        }
-        ?>
-        <input <?php echo $checked ?> type="checkbox" id="<?php echo $field['key'] ?>_subsets_<?php echo $i ?>" name="<?php echo $field['key'] ?>_subsets[]" value="<?php echo $subset ?>"><label for="<?php echo $field['key'] ?>_subsets_<?php echo $i ?>"><?php echo $subset ?></label> <br>
+    if( empty( $new_font ) ) {
+        $checked = ( empty( $field['value'] ) || ( !empty( $field['value'] ) && in_array( $subset, $field['value']['subsets'] ) ) ) ? 'checked="checked"' : '';
+    }
+    else {
+        $checked = ( $subset == 'latin' ) ? 'checked="checked"' : '';
+    }
+?>
+<input <?php echo $checked ?> type="checkbox" id="<?php echo $field['key'] ?>_subsets_<?php echo $i ?>" name="<?php echo $field['key'] ?>_subsets[]" value="<?php echo $subset ?>"><label for="<?php echo $field['key'] ?>_subsets_<?php echo $i ?>"><?php echo $subset ?></label> <br>
 
-        <?php $i++; endforeach;
+<?php $i++; endforeach;
 
 }
 
@@ -376,6 +543,11 @@ function acfgfs_action_get_font_details() {
     ob_start();
     acfgfs_display_variant_list( $field, $_POST['font_family'] );
     $details['variants'] = ob_get_clean();
+
+    /*
+    ob_start();
+    acfgfs_display_websafe( $field, $_POST['font_family'] );
+    $details['websafe'] = ob_get_clean();*/
 
     echo json_encode( $details );
 

@@ -1,10 +1,10 @@
 <?php
 
 /*
-Plugin Name: Advanced Custom Fields: Google Font Selector
+Plugin Name: Advanced Custom Fields: Google Font Selector (WPANDCO update)
 Plugin URI: https://github.com/danielpataki/ACF-Google-Font-Selector
 Description: A field for Advanced Custom Fields which allows users to select Google fonts with advanced options
-Version: 3.0.1
+Version: 3.0.1.01
 Author: Daniel Pataki
 Author URI: http://danielpataki.com
 License: GPLv2 or later
