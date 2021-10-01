@@ -242,6 +242,12 @@ function acfgfs_retrieve_fonts() {
     }
 
     $request = wp_remote_get( 'https://www.googleapis.com/webfonts/v1/webfonts?key=' . $api_key );
+    
+    if( !isset( $request ) || !is_array( $request ) || !isset( $request['body'] ) ) {
+    	/** Request Failed **/
+    	return array();
+    }
+    
     $response = json_decode( $request['body'], true );
     if( !empty( $response['items'] ) ) {
         $timeout = ( defined( 'ACFGFS_REFRESH' ) ) ? ACFGFS_REFRESH : WEEK_IN_SECONDS;
