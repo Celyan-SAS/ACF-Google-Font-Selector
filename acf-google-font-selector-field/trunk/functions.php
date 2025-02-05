@@ -159,6 +159,8 @@ function acfgfs_get_font( $font ) {
 
     //die();
 
+    if ( empty( $font ) || !is_scalar( $font ) || empty($fonts) || !is_array($fonts) || empty($fonts[$font]) ) { return array(); }
+
     return $fonts[$font];
 }
 
